@@ -1,31 +1,11 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Warframe Tracker</title>
-  <meta name="description" content="Tracker für Warframes, Waffen und Companions inklusive Crafting-Komponenten und Blueprint-Fortschritt.">
+  <meta name="description" content="Tracker for Warframes, weapons, and companions with crafting components and blueprint progress.">
   <link rel="stylesheet" href="styles.css">
-  <script>
-    // Die Warframe Items API ist zu groß für localStorage in vielen Browsern.
-    // Der eigentliche Fortschritt nutzt einen separaten Key und bleibt erhalten.
-    (() => {
-      const blockedCacheKey = "wf-tracker:items:v1";
-      try {
-        localStorage.removeItem(blockedCacheKey);
-      } catch (error) {
-        console.warn("Warframe API cache could not be cleared:", error);
-      }
-
-      const originalSetItem = Storage.prototype.setItem;
-      Storage.prototype.setItem = function patchedSetItem(key, value) {
-        if (key === blockedCacheKey) {
-          return undefined;
-        }
-        return originalSetItem.call(this, key, value);
-      };
-    })();
-  </script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -34,10 +14,10 @@
     <div class="hero__content">
       <div>
         <h1>Warframe Tracker</h1>
-        <p>Verwalte Warframes, Waffen und Companions mit Blueprint- und Komponenten-Fortschritt. Deine Daten bleiben lokal im Browser.</p>
+        <p>Track Warframes, weapons, and companions in separate categories. Check off blueprints and crafting parts, then mark the whole item complete.</p>
       </div>
-      <div class="hero__actions" aria-label="Datenaktionen">
-        <button id="refreshBtn" class="button button--primary" type="button">Daten aktualisieren</button>
+      <div class="hero__actions" aria-label="Data actions">
+        <button id="refreshBtn" class="button button--primary" type="button">Refresh data</button>
         <button id="exportBtn" class="button" type="button">Export</button>
         <button id="importBtn" class="button" type="button">Import</button>
         <input id="importFile" type="file" accept="application/json" hidden>
@@ -46,50 +26,50 @@
   </header>
 
   <main class="app-shell">
-    <section class="toolbar" aria-label="Filter und Suche">
-      <div class="tabs" role="tablist" aria-label="Kategorien">
-        <button class="tab is-active" type="button" data-category="warframes" role="tab" aria-selected="true">Warframes <span id="count-warframes">0</span></button>
-        <button class="tab" type="button" data-category="weapons" role="tab" aria-selected="false">Waffen <span id="count-weapons">0</span></button>
-        <button class="tab" type="button" data-category="companions" role="tab" aria-selected="false">Companions <span id="count-companions">0</span></button>
+    <section class="toolbar" aria-label="Filters and search">
+      <div class="tabs" role="tablist" aria-label="Categories">
+        <button class="tab is-active" type="button" data-category="warframes" role="tab" aria-selected="true">Warframes <span id="count-warframes">—</span></button>
+        <button class="tab" type="button" data-category="weapons" role="tab" aria-selected="false">Weapons <span id="count-weapons">—</span></button>
+        <button class="tab" type="button" data-category="companions" role="tab" aria-selected="false">Companions <span id="count-companions">—</span></button>
       </div>
 
       <div class="filters">
         <label class="search">
-          <span class="sr-only">Suche</span>
-          <input id="searchInput" type="search" placeholder="Suchen nach Name, Typ oder Komponente …" autocomplete="off">
+          <span class="sr-only">Search</span>
+          <input id="searchInput" type="search" placeholder="Search by name, type, or component …" autocomplete="off">
         </label>
         <label class="checkbox-pill">
           <input id="hideCompleteInput" type="checkbox">
-          Erledigte ausblenden
+          Hide complete
         </label>
-        <select id="sortSelect" aria-label="Sortierung">
+        <select id="sortSelect" aria-label="Sort order">
           <option value="name">Name A–Z</option>
-          <option value="progress">Fortschritt</option>
+          <option value="progress">Progress</option>
           <option value="mastery">Mastery Rank</option>
         </select>
       </div>
     </section>
 
-    <section class="summary-grid" aria-label="Fortschritt">
+    <section class="summary-grid" aria-label="Progress summary">
       <article class="summary-card">
-        <span class="summary-card__label">Gesamt</span>
-        <strong id="stat-total">0</strong>
+        <span class="summary-card__label">Total</span>
+        <strong id="stat-total">—</strong>
       </article>
       <article class="summary-card">
-        <span class="summary-card__label">Komplett</span>
+        <span class="summary-card__label">Complete</span>
         <strong id="stat-complete">0</strong>
       </article>
       <article class="summary-card">
-        <span class="summary-card__label">Blueprints/Teile</span>
+        <span class="summary-card__label">Blueprints/Parts</span>
         <strong id="stat-parts">0%</strong>
       </article>
       <article class="summary-card">
-        <span class="summary-card__label">Quelle</span>
-        <strong id="stat-source">–</strong>
+        <span class="summary-card__label">Source</span>
+        <strong id="stat-source">Live API</strong>
       </article>
     </section>
 
-    <p id="status" class="status" role="status">Lade Warframe-Daten …</p>
+    <p id="status" class="status" role="status">Loading Warframe data …</p>
 
     <section class="content-layout">
       <section>
@@ -98,8 +78,8 @@
 
       <aside id="detailsPanel" class="details-panel details-panel--empty" aria-live="polite">
         <div class="empty-state">
-          <h2>Wähle einen Eintrag</h2>
-          <p>Klicke auf einen Warframe, eine Waffe oder einen Companion, um Details und Crafting-Komponenten zu sehen.</p>
+          <h2>Select an item</h2>
+          <p>Choose a Warframe, weapon, or companion to see details and crafting components.</p>
         </div>
       </aside>
     </section>
@@ -122,6 +102,6 @@
     </article>
   </template>
 
-  <noscript>Bitte aktiviere JavaScript, damit der Warframe Tracker funktioniert.</noscript>
+  <noscript>Please enable JavaScript to use the Warframe Tracker.</noscript>
 </body>
 </html>
