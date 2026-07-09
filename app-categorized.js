@@ -1,6 +1,7 @@
 const DATA_URL = "https://api.warframestat.us/items?language=en";
 const IMG_BASE = "https://cdn.warframestat.us/img/";
-const PROGRESS_KEY = "wf-tracker:progress:v1";
+const PROGRESS_KEY = "wf-tracker:progress:v2";
+const OLD_PROGRESS_KEY = "wf-tracker:progress:v1";
 const PAGE_SIZE = 120;
 
 const CATEGORIES = {
@@ -50,6 +51,24 @@ const CATEGORIES = {
     ],
   },
 };
+
+const FRAME_PARTS = ["Neuroptics", "Chassis", "Systems"];
+const OWNABLE_PART_WORDS = [
+  "blueprint", "neuroptics", "chassis", "systems", "cerebrum", "carapace", "prime", "barrel", "receiver",
+  "stock", "blade", "handle", "hilt", "head", "link", "pouch", "string", "limb", "lower limb", "upper limb",
+  "grip", "loader", "chamber", "bracket", "chain", "disc", "gauntlet", "guard", "ornament", "stars", "subcortex",
+  "casing", "capsule", "engine", "weapon pod", "wings", "harness"
+];
+
+const RESOURCE_WORDS = [
+  "credits", "credit", "alloy plate", "argon crystal", "circuits", "control module", "cryotic", "detonite ampule",
+  "ferrite", "fieldron sample", "gallium", "morphics", "mutagen sample", "nano spores", "neural sensors",
+  "neurodes", "orokin cell", "oxium", "plastids", "polymer bundle", "rubedo", "salvage", "tellurium", "forma",
+  "kuva", "endo", "void traces", "hexenon", "copernics", "carbides", "cubic diodes", "pustrels", "fresnels",
+  "titanium", "iradite", "groksdrul", "maprico", "norg", "murkray", "charc", "fish oil", "thermal sludge",
+  "gorgaricus", "tepa nodule", "mytocardia", "spinal core", "ganglion", "seriglass", "scintillant",
+  "entrati lanthorn", "thrax plasm", "rune marrow", "pathos clamp", "tasoma", "yacshag", "kovnik", "aggristone"
+];
 
 const state = {
   catalogs: { warframes: [], weapons: [], companions: [] },
@@ -132,8 +151,8 @@ function buildCatalogs(rawItems) {
     if (!category) return;
     item.category = category;
     item.subcategory = subCategory(item, category);
-    item.parts = makeChecklist(item);
-    item.search = [item.name, item.type, item.productCategory, item.itemCategory, subLabel(item.category, item.subcategory), item.description, item.parts.map((p) => p.name).join(" ")].join(" ").toLowerCase();
+    item.parts = makeOwnedBlueprintList(item);
+    item.search = [item.name, item.type, item.productCategory, item.itemCategory, subLabel(item.category, item.subcategory), item.description, item.parts.map((p) => `${p.name} ${p.requirements.map((r) => r.name).join(" ")}`).join(" ")].join(" ").toLowerCase();
     catalogs[category].push(item);
   });
   Object.keys(catalogs).forEach((key) => {
@@ -236,32 +255,90 @@ function imageUrl(raw) {
   return `${IMG_BASE}${String(img).replace(/^\/?img\//i, "")}`;
 }
 
-function makeChecklist(item) {
-  const parts = [{ name: `${item.name} Blueprint`, kind: "Blueprint", count: 1, notes: `Main blueprint for this ${CATEGORIES[item.category].item.toLowerCase()}.` }];
-  item.components.map(normalizePart).filter(Boolean).forEach((part) => addPart(parts, part));
+function makeOwnedBlueprintList(item) {
+  const directComponents = item.components.map(normalizeRequirement).filter(Boolean);
+  const trackableComponents = directComponents.filter((component) => isTrackableBlueprintComponent(component, item));
+  const resourceRequirements = directComponents.filter((component) => !trackableComponents.includes(component));
+
+  const parts = [{
+    name: `${item.name} Blueprint`,
+    kind: "Blueprint",
+    count: 1,
+    notes: "Check this only when you own the main blueprint.",
+    requirements: mainBlueprintRequirements(item, trackableComponents, resourceRequirements),
+  }];
+
   if (item.category === "warframes" && ["warframes", "prime-warframes"].includes(item.subcategory)) {
-    ["Neuroptics", "Chassis", "Systems"].forEach((name) => {
-      if (!parts.some((part) => part.name.toLowerCase().includes(name.toLowerCase()))) addPart(parts, { name: `${item.name} ${name}`, kind: "Blueprint/Part", count: 1, notes: "Standard Warframe crafting part." });
+    FRAME_PARTS.forEach((framePart) => {
+      const component = findFrameComponent(trackableComponents, item, framePart);
+      const name = component?.name || `${item.name} ${framePart}`;
+      addOwnedPart(parts, {
+        name: `${name} Blueprint`,
+        kind: "Component Blueprint",
+        count: 1,
+        notes: `Check this when you own the ${framePart} blueprint.`,
+        requirements: component?.requirements || [],
+      });
+    });
+  } else {
+    trackableComponents.forEach((component) => {
+      addOwnedPart(parts, {
+        name: blueprintName(component.name),
+        kind: component.kind || "Part Blueprint",
+        count: component.count || 1,
+        notes: "Check this when you own this blueprint/part.",
+        requirements: component.requirements || [],
+      });
     });
   }
-  if (parts.length === 1) parts[0].notes = "No detailed components were available from the data source, so only the main blueprint is tracked.";
+
   return parts.map((part) => ({ ...part, key: `${item.id}::${clean(part.name).toLowerCase().replace(/[^a-z0-9]+/gi, "-")}` }));
 }
 
-function normalizePart(part) {
+function mainBlueprintRequirements(item, trackableComponents, resourceRequirements) {
+  const reqs = [];
+  if (item.category === "warframes" && ["warframes", "prime-warframes"].includes(item.subcategory)) {
+    FRAME_PARTS.forEach((part) => reqs.push({ name: `Crafted ${item.name} ${part}`, count: 1, kind: "Crafted Component", requirements: [] }));
+  } else {
+    trackableComponents.forEach((component) => reqs.push({ name: component.name, count: component.count || 1, kind: "Owned Part", requirements: [] }));
+  }
+  resourceRequirements.forEach((resource) => reqs.push(resource));
+  return reqs;
+}
+
+function findFrameComponent(components, item, framePart) {
+  const framePartLower = framePart.toLowerCase();
+  return components.find((component) => component.name.toLowerCase().includes(framePartLower))
+    || components.find((component) => `${item.name} ${framePart}`.toLowerCase().includes(component.name.toLowerCase()));
+}
+
+function blueprintName(name) {
+  return /blueprint$/i.test(name) ? name : `${name} Blueprint`;
+}
+
+function isTrackableBlueprintComponent(component, item) {
+  const name = component.name.toLowerCase();
+  if (item.category === "warframes" && FRAME_PARTS.some((part) => name.includes(part.toLowerCase()))) return true;
+  if (component.requirements.length > 0) return true;
+  if (name.includes("blueprint")) return true;
+  if (RESOURCE_WORDS.some((resource) => name === resource || name.includes(resource))) return false;
+  return OWNABLE_PART_WORDS.some((word) => name.includes(word));
+}
+
+function normalizeRequirement(part) {
   const name = clean(part?.name || part?.itemName || part?.uniqueName || "");
   if (!name) return null;
   return {
     name,
-    kind: clean(part.type || part.category || "Component"),
+    kind: clean(part.type || part.category || "Requirement"),
     count: part.itemCount || part.count || part.quantity || 1,
     notes: clean(part.description || ""),
     drops: Array.isArray(part.drops) ? part.drops.map((drop) => typeof drop === "string" ? drop : [drop.location, drop.type, drop.chance ? `${drop.chance}%` : ""].filter(Boolean).join(" · ")).filter(Boolean).slice(0, 5) : [],
-    children: Array.isArray(part.components) ? part.components.map(normalizePart).filter(Boolean) : [],
+    requirements: Array.isArray(part.components) ? part.components.map(normalizeRequirement).filter(Boolean) : [],
   };
 }
 
-function addPart(parts, part) {
+function addOwnedPart(parts, part) {
   if (!parts.some((existing) => existing.name.toLowerCase() === part.name.toLowerCase())) parts.push(part);
 }
 
@@ -353,7 +430,7 @@ function card(item) {
   node.querySelector(".badge").textContent = progress.complete ? "Complete" : `${progress.percent}%`;
   node.querySelector(".item-card__meta").textContent = metaLine(item);
   node.querySelector(".progress span").style.width = `${progress.percent}%`;
-  node.querySelector(".item-card__progress").textContent = `${progress.done}/${progress.total} blueprints/parts`;
+  node.querySelector(".item-card__progress").textContent = `${progress.done}/${progress.total} owned blueprints`;
   node.addEventListener("click", () => select(item.id));
   node.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(item.id); } });
   return node;
@@ -385,10 +462,11 @@ function renderDetails() {
     </div>
     <div class="detail-progress-row">
       <div class="progress"><span style="width:${progress.percent}%"></span></div>
-      <strong>${progress.done}/${progress.total} done · ${progress.percent}%</strong>
+      <strong>${progress.done}/${progress.total} owned blueprints/parts · ${progress.percent}%</strong>
     </div>
-    <button class="button button--primary button--wide" type="button" data-complete-toggle>${progress.complete ? "Mark as incomplete" : "Mark everything owned"}</button>
-    <h3>Blueprints & crafting components</h3>
+    <button class="button button--primary button--wide" type="button" data-complete-toggle>${progress.complete ? "Mark as incomplete" : "Mark all owned blueprints"}</button>
+    <h3>Owned blueprints / parts</h3>
+    <p class="details-help">Only the checkbox rows count toward completion. Open a row to see the materials required to craft that blueprint/part.</p>
     <div class="checklist">${item.parts.map((part) => partRow(item, part)).join("")}</div>
     ${item.wikiaUrl ? `<a class="wiki-link" href="${escapeAttr(item.wikiaUrl)}" target="_blank" rel="noopener noreferrer">Open wiki</a>` : ""}`;
   const detailsImage = el.details.querySelector(".details-image");
@@ -399,9 +477,29 @@ function renderDetails() {
 
 function partRow(item, part) {
   const checked = Boolean(state.progress[item.id]?.parts?.[part.key]);
-  const kids = part.children?.length ? `<ul class="subcomponents">${part.children.map((child) => `<li>${escapeHtml(partLabel(child))}</li>`).join("")}</ul>` : "";
-  const drops = part.drops?.length ? `<p class="drops">Drops: ${part.drops.map(escapeHtml).join(" · ")}</p>` : "";
-  return `<label class="part-row ${checked ? "is-checked" : ""}"><input type="checkbox" data-part-key="${escapeAttr(part.key)}" ${checked ? "checked" : ""}><span><strong>${escapeHtml(partLabel(part))}</strong><small>${escapeHtml(part.kind || "Component")}${part.notes ? ` · ${escapeHtml(part.notes)}` : ""}</small>${kids}${drops}</span></label>`;
+  const requirements = part.requirements?.length
+    ? `<div class="requirement-list"><strong>Crafting requirements</strong>${requirementList(part.requirements)}</div>`
+    : `<p class="drops">No crafting requirements found in the data source for this blueprint/part.</p>`;
+  return `
+    <details class="part-row ${checked ? "is-checked" : ""}">
+      <summary>
+        <input type="checkbox" data-part-key="${escapeAttr(part.key)}" ${checked ? "checked" : ""} onclick="event.stopPropagation()">
+        <span>
+          <strong>${escapeHtml(partLabel(part))}</strong>
+          <small>${escapeHtml(part.kind || "Blueprint")}${part.notes ? ` · ${escapeHtml(part.notes)}` : ""}</small>
+        </span>
+      </summary>
+      ${requirements}
+    </details>`;
+}
+
+function requirementList(requirements) {
+  return `<ul class="subcomponents">${requirements.map((req) => `
+    <li>
+      ${escapeHtml(partLabel(req))}
+      ${req.requirements?.length ? requirementList(req.requirements) : ""}
+      ${req.drops?.length ? `<p class="drops">Drops: ${req.drops.map(escapeHtml).join(" · ")}</p>` : ""}
+    </li>`).join("")}</ul>`;
 }
 
 function visibleItems() {
@@ -447,14 +545,20 @@ function updateSummary() {
   document.querySelector("#stat-source").textContent = "Items API";
 }
 
-function loadProgress() { try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; } catch { return {}; } }
+function loadProgress() {
+  try {
+    return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || JSON.parse(localStorage.getItem(OLD_PROGRESS_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
 function saveProgress() { try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(state.progress)); } catch (err) { setStatus(`Progress could not be saved: ${err.message}`, "warning"); } }
-function exportProgress() { const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), version: 1, progress: state.progress }, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "warframe-tracker-progress.json"; a.click(); URL.revokeObjectURL(url); }
+function exportProgress() { const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), version: 2, progress: state.progress }, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "warframe-tracker-progress.json"; a.click(); URL.revokeObjectURL(url); }
 async function importProgress(e) { const file = e.target.files?.[0]; if (!file) return; try { const payload = JSON.parse(await file.text()); state.progress = payload.progress || payload; saveProgress(); setStatus("Progress imported.", "success"); render(); } catch (err) { setStatus(`Import failed: ${err.message}`, "error"); } finally { el.importFile.value = ""; } }
 
 function setStatus(message, type = "info") { el.status.textContent = message; el.status.dataset.type = type; }
 function partLabel(part) { const count = Number(part.count || 1); return count > 1 ? `${count}× ${part.name}` : part.name; }
-function metaLine(item) { return [subLabel(item.category, item.subcategory), item.type, item.masteryReq !== null ? `MR ${item.masteryReq}` : "", `${item.parts.length} parts`].filter(Boolean).join(" · "); }
+function metaLine(item) { return [subLabel(item.category, item.subcategory), item.type, item.masteryReq !== null ? `MR ${item.masteryReq}` : "", `${item.parts.length} owned blueprints`].filter(Boolean).join(" · "); }
 function buildTime(value) { const seconds = Number(value); if (!Number.isFinite(seconds)) return String(value); const hours = Math.round(seconds / 3600); if (hours >= 24) return `${Math.round(hours / 24)} days`; if (hours >= 1) return `${hours} hours`; return `${Math.round(seconds / 60)} minutes`; }
 function initials(name) { return clean(name).split(" ").map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase(); }
 function clean(value) { return String(value || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim(); }
