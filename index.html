@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Warframe Tracker</title>
   <meta name="description" content="Tracker for Warframes, weapons, and companions with crafting components, owned blueprints, and mastery progress.">
-  <link rel="stylesheet" href="styles.css?v=20260709-1952">
+  <link rel="stylesheet" href="styles.css?v=20260709-1958">
   <style>
     .subtabs {
       grid-column: 1 / -1;
@@ -50,114 +50,42 @@
       font-size: 0.9rem;
     }
 
-    .build-card {
-      margin: 16px 0;
+    .inline-recipe-row {
+      align-items: start;
+    }
+
+    .inline-recipe {
+      display: block;
+      margin-top: 10px;
+      padding: 10px 12px;
       border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 14px;
-      background: rgba(255, 255, 255, 0.055);
-    }
-
-    .build-card__top {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      color: var(--muted);
-      font-size: 0.86rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .build-card__top strong {
-      color: var(--text);
-    }
-
-    .build-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 9px;
-      margin-top: 12px;
-    }
-
-    .build-req {
-      display: grid;
-      grid-template-columns: 32px 1fr;
-      gap: 9px;
-      align-items: center;
-      min-height: 38px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 8px;
+      border-radius: 14px;
       color: var(--muted);
       background: rgba(0, 0, 0, 0.16);
     }
 
-    .build-req.is-owned {
-      color: var(--good);
-      border-color: rgba(113, 240, 168, 0.45);
-    }
-
-    .build-req__icon {
-      display: grid;
-      place-items: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.1);
-      font-weight: 900;
-    }
-
-    .compact-row {
-      position: relative;
-    }
-
-    .recipe-tooltip {
-      position: absolute;
-      left: 36px;
-      right: 10px;
-      top: calc(100% - 6px);
-      z-index: 40;
-      display: none;
-      min-width: 240px;
-      max-width: min(420px, calc(100vw - 72px));
-      border: 1px solid rgba(101, 215, 255, 0.55);
-      border-radius: 14px;
-      padding: 12px;
-      color: var(--text);
-      background: rgba(8, 12, 24, 0.98);
-      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
-    }
-
-    .recipe-tooltip > strong {
+    .inline-recipe > strong {
       display: block;
       margin-bottom: 7px;
       color: var(--accent);
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
 
-    .recipe-tooltip ul {
+    .inline-recipe ul {
       margin: 0;
       padding-left: 18px;
-      color: var(--muted);
     }
 
-    .recipe-tooltip li + li {
+    .inline-recipe li + li {
       margin-top: 4px;
     }
 
-    .recipe-tooltip small {
+    .inline-recipe small {
       display: block;
       color: var(--muted);
       font-size: 0.76rem;
-    }
-
-    .compact-row:hover .recipe-tooltip,
-    .compact-row:focus-within .recipe-tooltip,
-    .compact-row:focus .recipe-tooltip {
-      display: block;
     }
 
     .mastery-row {
@@ -198,12 +126,6 @@
         overflow: visible;
       }
     }
-
-    @media (max-width: 560px) {
-      .build-grid {
-        grid-template-columns: 1fr;
-      }
-    }
   </style>
   <script>
     try {
@@ -213,6 +135,7 @@
     }
   </script>
   <script src="app-blueprints-v5.js?v=20260709-1952" defer></script>
+  <script src="app-blueprints-v6-patch.js?v=20260709-1958" defer></script>
 </head>
 <body>
   <header class="hero">
@@ -220,7 +143,7 @@
     <div class="hero__content">
       <div>
         <h1>Warframe Tracker</h1>
-        <p>Track Warframes, weapons, companions, Archwings, and weapon classes. See build requirements like in-game, check owned blueprints, hover for full recipes, and mark Max Level 30 for MASTERED.</p>
+        <p>Track Warframes, weapons, companions, Archwings, and weapon classes. Check owned blueprints, see recipes inside each row, and mark Max Level 30 for MASTERED.</p>
       </div>
       <div class="hero__actions" aria-label="Data actions">
         <button id="refreshBtn" class="button button--primary" type="button">Refresh data</button>
@@ -287,7 +210,7 @@
       <aside id="detailsPanel" class="details-panel details-panel--empty" aria-live="polite">
         <div class="empty-state">
           <h2>Select an item</h2>
-          <p>Choose a category and item to see build requirements, owned blueprints, recipes, and mastery.</p>
+          <p>Choose a category and item to see owned blueprints, recipes, and mastery.</p>
         </div>
       </aside>
     </section>
