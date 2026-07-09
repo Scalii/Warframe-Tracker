@@ -4,9 +4,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Warframe Tracker</title>
-  <meta name="description" content="Tracker for Warframes, weapons, and companions with resolved crafting recipes, owned blueprints, boss source hints, and mastery progress.">
-  <link rel="stylesheet" href="styles.css?v=20260709-2016">
+  <meta name="description" content="Tracker for Warframes, weapons, and companions with collapsed crafting recipes, owned blueprints, boss source hints, and mastery progress.">
+  <link rel="stylesheet" href="styles.css?v=20260709-2024">
   <style>
+    .hero {
+      padding-block: clamp(18px, 3vw, 34px) 14px;
+    }
+
+    .hero__eyebrow {
+      font-size: clamp(0.68rem, 1vw, 0.82rem);
+    }
+
+    .hero h1 {
+      margin: 8px 0;
+      font-size: clamp(2.2rem, 7vw, 4.8rem);
+      line-height: 0.95;
+    }
+
+    .hero__content {
+      align-items: end;
+      gap: 18px;
+    }
+
+    .hero__content p {
+      max-width: 760px;
+    }
+
+    .app-shell {
+      margin-top: 10px;
+    }
+
+    .content-layout {
+      align-items: start;
+    }
+
     .subtabs {
       grid-column: 1 / -1;
       display: flex;
@@ -39,7 +70,9 @@
     }
 
     .details-panel {
-      max-height: calc(100vh - 118px);
+      position: sticky;
+      top: 12px;
+      max-height: calc(100svh - 24px);
       overflow-y: auto;
       overscroll-behavior: contain;
       scrollbar-gutter: stable;
@@ -74,13 +107,47 @@
       font-size: 0.88rem;
     }
 
-    .inline-recipe-row {
+    details.recipe-row {
+      display: block;
+      padding: 0;
+    }
+
+    .recipe-row summary {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
       align-items: start;
+      padding: 14px;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .recipe-row summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .recipe-row summary input {
+      margin-top: 2px;
+    }
+
+    .recipe-arrow {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--accent);
+      transition: transform 0.16s ease;
+    }
+
+    .recipe-row[open] .recipe-arrow {
+      transform: rotate(180deg);
     }
 
     .inline-recipe {
       display: block;
-      margin-top: 10px;
+      margin: 0 14px 14px 48px;
       padding: 10px 12px;
       border: 1px solid var(--line);
       border-radius: 14px;
@@ -106,10 +173,15 @@
       margin-top: 4px;
     }
 
-    .inline-recipe small {
+    .inline-recipe small,
+    .recipe-missing {
       display: block;
       color: var(--muted);
       font-size: 0.76rem;
+    }
+
+    .recipe-missing {
+      margin: 0;
     }
 
     .mastery-row {
@@ -145,9 +217,32 @@
     }
 
     @media (max-width: 1100px) {
+      .hero__content {
+        align-items: start;
+      }
+
       .details-panel {
+        position: static;
         max-height: none;
         overflow: visible;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .hero {
+        padding-block: 16px 8px;
+      }
+
+      .hero__actions {
+        width: 100%;
+      }
+
+      .hero__actions .button {
+        flex: 1 1 auto;
+      }
+
+      .inline-recipe {
+        margin-left: 14px;
       }
     }
   </style>
@@ -163,6 +258,7 @@
   <script src="app-blueprints-v7-sources.js?v=20260709-2004" defer></script>
   <script src="app-blueprints-v8-bosses.js?v=20260709-2009" defer></script>
   <script src="app-blueprints-v9-recipes.js?v=20260709-2016" defer></script>
+  <script src="app-blueprints-v10-ui-recipes.js?v=20260709-2024" defer></script>
 </head>
 <body>
   <header class="hero">
@@ -170,7 +266,7 @@
     <div class="hero__content">
       <div>
         <h1>Warframe Tracker</h1>
-        <p>Track Warframes, weapons, companions, Archwings, and weapon classes. Check owned blueprints, see resolved recipes with merged quantities, and see known boss sources once for farmed frames.</p>
+        <p>Track Warframes, weapons, companions, Archwings, and weapon classes. Check owned blueprints, expand recipes when needed, and mark Max Level 30 for MASTERED.</p>
       </div>
       <div class="hero__actions" aria-label="Data actions">
         <button id="refreshBtn" class="button button--primary" type="button">Refresh data</button>
@@ -237,7 +333,7 @@
       <aside id="detailsPanel" class="details-panel details-panel--empty" aria-live="polite">
         <div class="empty-state">
           <h2>Select an item</h2>
-          <p>Choose a category and item to see owned blueprints, recipes, boss sources, and mastery.</p>
+          <p>Choose a category and item to see owned blueprints, expandable recipes, boss sources, and mastery.</p>
         </div>
       </aside>
     </section>
