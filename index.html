@@ -5,8 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Warframe Tracker</title>
   <meta name="description" content="Tracker for Warframes, weapons, and companions with crafting components and blueprint progress.">
-  <link rel="stylesheet" href="styles.css">
-  <script src="script.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260709-1908">
+  <script>
+    try {
+      localStorage.removeItem("wf-tracker:items:v1");
+    } catch {
+      // Ignore storage cleanup errors.
+    }
+  </script>
+  <script src="app.js?v=20260709-1908" defer></script>
 </head>
 <body>
   <header class="hero">
