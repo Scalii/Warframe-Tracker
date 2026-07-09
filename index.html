@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Warframe Tracker</title>
-  <meta name="description" content="Tracker for Warframes, weapons, and companions with crafting components, owned blueprints, and mastery progress.">
-  <link rel="stylesheet" href="styles.css?v=20260709-1958">
+  <meta name="description" content="Tracker for Warframes, weapons, and companions with crafting components, owned blueprints, source hints, and mastery progress.">
+  <link rel="stylesheet" href="styles.css?v=20260709-2004">
   <style>
     .subtabs {
       grid-column: 1 / -1;
@@ -48,6 +48,56 @@
     .details-help {
       margin: 8px 0 0;
       font-size: 0.9rem;
+    }
+
+    .source-card {
+      margin: 14px 0;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .source-card > strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--accent);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .source-card ul {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .source-card li {
+      display: grid;
+      gap: 3px;
+    }
+
+    .source-card li span {
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .source-card li small,
+    .part-source {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .part-source {
+      display: block;
+      margin-top: 4px;
+    }
+
+    .part-source strong {
+      color: var(--accent);
     }
 
     .inline-recipe-row {
@@ -136,6 +186,7 @@
   </script>
   <script src="app-blueprints-v5.js?v=20260709-1952" defer></script>
   <script src="app-blueprints-v6-patch.js?v=20260709-1958" defer></script>
+  <script src="app-blueprints-v7-sources.js?v=20260709-2004" defer></script>
 </head>
 <body>
   <header class="hero">
@@ -143,7 +194,7 @@
     <div class="hero__content">
       <div>
         <h1>Warframe Tracker</h1>
-        <p>Track Warframes, weapons, companions, Archwings, and weapon classes. Check owned blueprints, see recipes inside each row, and mark Max Level 30 for MASTERED.</p>
+        <p>Track Warframes, weapons, companions, Archwings, and weapon classes. Check owned blueprints, see recipes and source hints inside each row, and mark Max Level 30 for MASTERED.</p>
       </div>
       <div class="hero__actions" aria-label="Data actions">
         <button id="refreshBtn" class="button button--primary" type="button">Refresh data</button>
@@ -210,7 +261,7 @@
       <aside id="detailsPanel" class="details-panel details-panel--empty" aria-live="polite">
         <div class="empty-state">
           <h2>Select an item</h2>
-          <p>Choose a category and item to see owned blueprints, recipes, and mastery.</p>
+          <p>Choose a category and item to see owned blueprints, recipes, sources, and mastery.</p>
         </div>
       </aside>
     </section>
