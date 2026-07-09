@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Warframe Tracker</title>
-  <meta name="description" content="Tracker for Warframes, weapons, and companions with crafting components and blueprint progress.">
-  <link rel="stylesheet" href="styles.css?v=20260709-1944">
+  <meta name="description" content="Tracker for Warframes, weapons, and companions with crafting components, owned blueprints, and mastery progress.">
+  <link rel="stylesheet" href="styles.css?v=20260709-1952">
   <style>
     .subtabs {
       grid-column: 1 / -1;
@@ -38,36 +38,171 @@
       font-weight: 800;
     }
 
+    .details-panel {
+      max-height: calc(100vh - 118px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+    }
+
     .details-help {
       margin: 8px 0 0;
       font-size: 0.9rem;
     }
 
-    .requirement-list {
-      margin: 10px 0 0;
-      padding: 10px 12px;
+    .build-card {
+      margin: 16px 0;
       border: 1px solid var(--line);
-      border-radius: 14px;
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .build-card__top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .build-card__top strong {
+      color: var(--text);
+    }
+
+    .build-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .build-req {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 9px;
+      align-items: center;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
       color: var(--muted);
       background: rgba(0, 0, 0, 0.16);
     }
 
-    .requirement-list > strong {
+    .build-req.is-owned {
+      color: var(--good);
+      border-color: rgba(113, 240, 168, 0.45);
+    }
+
+    .build-req__icon {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.1);
+      font-weight: 900;
+    }
+
+    .compact-row {
+      position: relative;
+    }
+
+    .recipe-tooltip {
+      position: absolute;
+      left: 36px;
+      right: 10px;
+      top: calc(100% - 6px);
+      z-index: 40;
+      display: none;
+      min-width: 240px;
+      max-width: min(420px, calc(100vw - 72px));
+      border: 1px solid rgba(101, 215, 255, 0.55);
+      border-radius: 14px;
+      padding: 12px;
+      color: var(--text);
+      background: rgba(8, 12, 24, 0.98);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
+    }
+
+    .recipe-tooltip > strong {
       display: block;
       margin-bottom: 7px;
-      color: var(--text);
+      color: var(--accent);
       font-size: 0.82rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
 
-    .requirement-list .subcomponents {
-      margin-top: 0;
+    .recipe-tooltip ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
     }
 
-    .requirement-list .subcomponents .subcomponents {
-      margin-top: 6px;
-      opacity: 0.9;
+    .recipe-tooltip li + li {
+      margin-top: 4px;
+    }
+
+    .recipe-tooltip small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .compact-row:hover .recipe-tooltip,
+    .compact-row:focus-within .recipe-tooltip,
+    .compact-row:focus .recipe-tooltip {
+      display: block;
+    }
+
+    .mastery-row {
+      border-color: rgba(113, 240, 168, 0.32);
+    }
+
+    .mastered-ribbon,
+    .mastered-banner {
+      border: 1px solid rgba(113, 240, 168, 0.65);
+      color: #04140b;
+      background: linear-gradient(135deg, #9cf5bd, #66d8ff);
+      font-weight: 1000;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .mastered-ribbon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 0.68rem;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    }
+
+    .mastered-banner {
+      display: inline-flex;
+      margin-bottom: 12px;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 1100px) {
+      .details-panel {
+        max-height: none;
+        overflow: visible;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .build-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
   <script>
@@ -77,7 +212,7 @@
       // Ignore storage cleanup errors.
     }
   </script>
-  <script src="app-blueprints-v4.js?v=20260709-1944" defer></script>
+  <script src="app-blueprints-v5.js?v=20260709-1952" defer></script>
 </head>
 <body>
   <header class="hero">
@@ -85,7 +220,7 @@
     <div class="hero__content">
       <div>
         <h1>Warframe Tracker</h1>
-        <p>Track Warframes, weapons, companions, Archwings, and weapon classes in their own categories. Check off owned blueprints or parts; crafting requirements are shown directly below each row.</p>
+        <p>Track Warframes, weapons, companions, Archwings, and weapon classes. See build requirements like in-game, check owned blueprints, hover for full recipes, and mark Max Level 30 for MASTERED.</p>
       </div>
       <div class="hero__actions" aria-label="Data actions">
         <button id="refreshBtn" class="button button--primary" type="button">Refresh data</button>
@@ -111,7 +246,7 @@
         </label>
         <label class="checkbox-pill">
           <input id="hideCompleteInput" type="checkbox">
-          Hide complete
+          Hide mastered
         </label>
         <select id="sortSelect" aria-label="Sort order">
           <option value="name">Name A–Z</option>
@@ -129,11 +264,11 @@
         <strong id="stat-total">0</strong>
       </article>
       <article class="summary-card">
-        <span class="summary-card__label">Complete</span>
+        <span class="summary-card__label">Mastered</span>
         <strong id="stat-complete">0</strong>
       </article>
       <article class="summary-card">
-        <span class="summary-card__label">Blueprints/Parts</span>
+        <span class="summary-card__label">Progress</span>
         <strong id="stat-parts">0%</strong>
       </article>
       <article class="summary-card">
@@ -152,7 +287,7 @@
       <aside id="detailsPanel" class="details-panel details-panel--empty" aria-live="polite">
         <div class="empty-state">
           <h2>Select an item</h2>
-          <p>Choose a category and item to see owned blueprints and crafting requirements.</p>
+          <p>Choose a category and item to see build requirements, owned blueprints, recipes, and mastery.</p>
         </div>
       </aside>
     </section>
