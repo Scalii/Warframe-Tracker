@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Warframe Tracker</title>
   <meta name="description" content="Tracker for Warframes, weapons, and companions with crafting components and blueprint progress.">
-  <link rel="stylesheet" href="styles.css?v=20260709-1922">
+  <link rel="stylesheet" href="styles.css?v=20260709-1932">
   <style>
     .subtabs {
       grid-column: 1 / -1;
@@ -37,6 +37,65 @@
       background: linear-gradient(135deg, var(--accent), var(--accent-2));
       font-weight: 800;
     }
+
+    .details-help {
+      margin: 8px 0 0;
+      font-size: 0.9rem;
+    }
+
+    details.part-row {
+      display: block;
+    }
+
+    .part-row summary {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: start;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .part-row summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .part-row summary::after {
+      content: "Open crafting requirements";
+      grid-column: 2;
+      color: var(--accent);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .part-row[open] summary::after {
+      content: "Hide crafting requirements";
+    }
+
+    .requirement-list {
+      margin: 12px 0 0 28px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.16);
+    }
+
+    .requirement-list > strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .requirement-list .subcomponents {
+      margin-top: 0;
+    }
+
+    .requirement-list .subcomponents .subcomponents {
+      margin-top: 6px;
+      opacity: 0.9;
+    }
   </style>
   <script>
     try {
@@ -45,7 +104,7 @@
       // Ignore storage cleanup errors.
     }
   </script>
-  <script src="app-categorized.js?v=20260709-1922" defer></script>
+  <script src="app-categorized.js?v=20260709-1932" defer></script>
 </head>
 <body>
   <header class="hero">
@@ -53,7 +112,7 @@
     <div class="hero__content">
       <div>
         <h1>Warframe Tracker</h1>
-        <p>Track Warframes, weapons, companions, Archwings, and weapon classes in their own categories. Check off blueprints and crafting parts, then mark the whole item complete.</p>
+        <p>Track Warframes, weapons, companions, Archwings, and weapon classes in their own categories. Check off owned blueprints or parts, then open each row to see its crafting requirements.</p>
       </div>
       <div class="hero__actions" aria-label="Data actions">
         <button id="refreshBtn" class="button button--primary" type="button">Refresh data</button>
@@ -120,7 +179,7 @@
       <aside id="detailsPanel" class="details-panel details-panel--empty" aria-live="polite">
         <div class="empty-state">
           <h2>Select an item</h2>
-          <p>Choose a category and item to see details and crafting components.</p>
+          <p>Choose a category and item to see owned blueprints and crafting requirements.</p>
         </div>
       </aside>
     </section>
