@@ -6,6 +6,26 @@
   <title>Warframe Tracker</title>
   <meta name="description" content="Tracker für Warframes, Waffen und Companions inklusive Crafting-Komponenten und Blueprint-Fortschritt.">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    // Die Warframe Items API ist zu groß für localStorage in vielen Browsern.
+    // Der eigentliche Fortschritt nutzt einen separaten Key und bleibt erhalten.
+    (() => {
+      const blockedCacheKey = "wf-tracker:items:v1";
+      try {
+        localStorage.removeItem(blockedCacheKey);
+      } catch (error) {
+        console.warn("Warframe API cache could not be cleared:", error);
+      }
+
+      const originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function patchedSetItem(key, value) {
+        if (key === blockedCacheKey) {
+          return undefined;
+        }
+        return originalSetItem.call(this, key, value);
+      };
+    })();
+  </script>
   <script src="script.js" defer></script>
 </head>
 <body>
