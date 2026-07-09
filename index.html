@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Warframe Tracker</title>
+  <meta name="description" content="Tracker für Warframes, Waffen und Companions inklusive Crafting-Komponenten und Blueprint-Fortschritt.">
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero__eyebrow">Tenno Arsenal Checklist</div>
+    <div class="hero__content">
+      <div>
+        <h1>Warframe Tracker</h1>
+        <p>Verwalte Warframes, Waffen und Companions mit Blueprint- und Komponenten-Fortschritt. Deine Daten bleiben lokal im Browser.</p>
+      </div>
+      <div class="hero__actions" aria-label="Datenaktionen">
+        <button id="refreshBtn" class="button button--primary" type="button">Daten aktualisieren</button>
+        <button id="exportBtn" class="button" type="button">Export</button>
+        <button id="importBtn" class="button" type="button">Import</button>
+        <input id="importFile" type="file" accept="application/json" hidden>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="toolbar" aria-label="Filter und Suche">
+      <div class="tabs" role="tablist" aria-label="Kategorien">
+        <button class="tab is-active" type="button" data-category="warframes" role="tab" aria-selected="true">Warframes <span id="count-warframes">0</span></button>
+        <button class="tab" type="button" data-category="weapons" role="tab" aria-selected="false">Waffen <span id="count-weapons">0</span></button>
+        <button class="tab" type="button" data-category="companions" role="tab" aria-selected="false">Companions <span id="count-companions">0</span></button>
+      </div>
+
+      <div class="filters">
+        <label class="search">
+          <span class="sr-only">Suche</span>
+          <input id="searchInput" type="search" placeholder="Suchen nach Name, Typ oder Komponente …" autocomplete="off">
+        </label>
+        <label class="checkbox-pill">
+          <input id="hideCompleteInput" type="checkbox">
+          Erledigte ausblenden
+        </label>
+        <select id="sortSelect" aria-label="Sortierung">
+          <option value="name">Name A–Z</option>
+          <option value="progress">Fortschritt</option>
+          <option value="mastery">Mastery Rank</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="summary-grid" aria-label="Fortschritt">
+      <article class="summary-card">
+        <span class="summary-card__label">Gesamt</span>
+        <strong id="stat-total">0</strong>
+      </article>
+      <article class="summary-card">
+        <span class="summary-card__label">Komplett</span>
+        <strong id="stat-complete">0</strong>
+      </article>
+      <article class="summary-card">
+        <span class="summary-card__label">Blueprints/Teile</span>
+        <strong id="stat-parts">0%</strong>
+      </article>
+      <article class="summary-card">
+        <span class="summary-card__label">Quelle</span>
+        <strong id="stat-source">–</strong>
+      </article>
+    </section>
+
+    <p id="status" class="status" role="status">Lade Warframe-Daten …</p>
+
+    <section class="content-layout">
+      <section>
+        <div id="itemGrid" class="item-grid" aria-live="polite"></div>
+      </section>
+
+      <aside id="detailsPanel" class="details-panel details-panel--empty" aria-live="polite">
+        <div class="empty-state">
+          <h2>Wähle einen Eintrag</h2>
+          <p>Klicke auf einen Warframe, eine Waffe oder einen Companion, um Details und Crafting-Komponenten zu sehen.</p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <template id="cardTemplate">
+    <article class="item-card" tabindex="0">
+      <div class="item-card__image-wrap">
+        <img class="item-card__image" alt="" loading="lazy">
+      </div>
+      <div class="item-card__body">
+        <div class="item-card__topline">
+          <h3></h3>
+          <span class="badge"></span>
+        </div>
+        <p class="item-card__meta"></p>
+        <div class="progress" aria-hidden="true"><span></span></div>
+        <p class="item-card__progress"></p>
+      </div>
+    </article>
+  </template>
+
+  <noscript>Bitte aktiviere JavaScript, damit der Warframe Tracker funktioniert.</noscript>
+</body>
+</html>
