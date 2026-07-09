@@ -5,7 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Warframe Tracker</title>
   <meta name="description" content="Tracker for Warframes, weapons, and companions with crafting components and blueprint progress.">
-  <link rel="stylesheet" href="styles.css?v=20260709-1908">
+  <link rel="stylesheet" href="styles.css?v=20260709-1916">
+  <style>
+    .subtabs {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 2px;
+    }
+
+    .subtab {
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      padding: 8px 11px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.045);
+      transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+    }
+
+    .subtab:hover,
+    .subtab:focus-visible {
+      border-color: rgba(101, 215, 255, 0.8);
+      color: var(--text);
+      outline: none;
+    }
+
+    .subtab.is-active {
+      border-color: transparent;
+      color: #06111d;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      font-weight: 800;
+    }
+  </style>
   <script>
     try {
       localStorage.removeItem("wf-tracker:items:v1");
@@ -13,7 +45,7 @@
       // Ignore storage cleanup errors.
     }
   </script>
-  <script src="app.js?v=20260709-1908" defer></script>
+  <script src="app.js?v=20260709-1916" defer></script>
 </head>
 <body>
   <header class="hero">
@@ -21,7 +53,7 @@
     <div class="hero__content">
       <div>
         <h1>Warframe Tracker</h1>
-        <p>Track Warframes, weapons, and companions in separate categories. Check off blueprints and crafting parts, then mark the whole item complete.</p>
+        <p>Track Warframes, weapons, companions, Archwings, and weapon classes in their own categories. Check off blueprints and crafting parts, then mark the whole item complete.</p>
       </div>
       <div class="hero__actions" aria-label="Data actions">
         <button id="refreshBtn" class="button button--primary" type="button">Refresh data</button>
@@ -34,10 +66,10 @@
 
   <main class="app-shell">
     <section class="toolbar" aria-label="Filters and search">
-      <div class="tabs" role="tablist" aria-label="Categories">
-        <button class="tab is-active" type="button" data-category="warframes" role="tab" aria-selected="true">Warframes <span id="count-warframes">—</span></button>
-        <button class="tab" type="button" data-category="weapons" role="tab" aria-selected="false">Weapons <span id="count-weapons">—</span></button>
-        <button class="tab" type="button" data-category="companions" role="tab" aria-selected="false">Companions <span id="count-companions">—</span></button>
+      <div class="tabs" role="tablist" aria-label="Main categories">
+        <button class="tab is-active" type="button" data-category="warframes" role="tab" aria-selected="true">Warframes <span id="count-warframes">0/0</span></button>
+        <button class="tab" type="button" data-category="weapons" role="tab" aria-selected="false">Weapons <span id="count-weapons">0/0</span></button>
+        <button class="tab" type="button" data-category="companions" role="tab" aria-selected="false">Companions <span id="count-companions">0/0</span></button>
       </div>
 
       <div class="filters">
@@ -55,12 +87,14 @@
           <option value="mastery">Mastery Rank</option>
         </select>
       </div>
+
+      <div id="subCategoryTabs" class="subtabs" aria-label="Subcategories"></div>
     </section>
 
     <section class="summary-grid" aria-label="Progress summary">
       <article class="summary-card">
-        <span class="summary-card__label">Total</span>
-        <strong id="stat-total">—</strong>
+        <span class="summary-card__label">Shown</span>
+        <strong id="stat-total">0</strong>
       </article>
       <article class="summary-card">
         <span class="summary-card__label">Complete</span>
@@ -72,7 +106,7 @@
       </article>
       <article class="summary-card">
         <span class="summary-card__label">Source</span>
-        <strong id="stat-source">Live API</strong>
+        <strong id="stat-source">Items API</strong>
       </article>
     </section>
 
@@ -86,7 +120,7 @@
       <aside id="detailsPanel" class="details-panel details-panel--empty" aria-live="polite">
         <div class="empty-state">
           <h2>Select an item</h2>
-          <p>Choose a Warframe, weapon, or companion to see details and crafting components.</p>
+          <p>Choose a category and item to see details and crafting components.</p>
         </div>
       </aside>
     </section>
