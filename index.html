@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Warframe Tracker</title>
-  <meta name="description" content="Tracker for Warframes, weapons, and companions with crafting components, owned blueprints, boss source hints, and mastery progress.">
-  <link rel="stylesheet" href="styles.css?v=20260709-2009">
+  <meta name="description" content="Tracker for Warframes, weapons, and companions with resolved crafting recipes, owned blueprints, boss source hints, and mastery progress.">
+  <link rel="stylesheet" href="styles.css?v=20260709-2016">
   <style>
     .subtabs {
       grid-column: 1 / -1;
@@ -162,6 +162,7 @@
   <script src="app-blueprints-v6-patch.js?v=20260709-1958" defer></script>
   <script src="app-blueprints-v7-sources.js?v=20260709-2004" defer></script>
   <script src="app-blueprints-v8-bosses.js?v=20260709-2009" defer></script>
+  <script src="app-blueprints-v9-recipes.js?v=20260709-2016" defer></script>
 </head>
 <body>
   <header class="hero">
@@ -169,7 +170,7 @@
     <div class="hero__content">
       <div>
         <h1>Warframe Tracker</h1>
-        <p>Track Warframes, weapons, companions, Archwings, and weapon classes. Check owned blueprints, see recipes inside each row, and see boss-source hints once for farmed frames.</p>
+        <p>Track Warframes, weapons, companions, Archwings, and weapon classes. Check owned blueprints, see resolved recipes with merged quantities, and see known boss sources once for farmed frames.</p>
       </div>
       <div class="hero__actions" aria-label="Data actions">
         <button id="refreshBtn" class="button button--primary" type="button">Refresh data</button>
